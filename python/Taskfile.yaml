@@ -1,0 +1,33 @@
+version: '3'
+
+tasks:
+  # Основные команды тестирования
+  test:
+    desc: "Запустить ВСЕ тесты"
+    cmds:
+      - pytest -v
+
+  test-all:
+    desc: "Запустить ВСЕ тесты с подробным выводом"
+    cmds:
+      - pytest -v -s
+
+  test-no-prints:
+    desc: "Запустить тесты без test_with_prints"
+    cmds:
+      - pytest tests/ --ignore=tests/test_with_prints.py -v
+
+  test-no-prints-verbose:
+    desc: "Запустить тесты БЕЗ test_with_prints с подробным выводом"
+    cmds:
+      - pytest tests/ --ignore=tests/test_with_prints.py -v -s
+
+  test-prints:
+    desc: "Запустить ТОЛЬКО test_with_prints"
+    cmds:
+      - pytest tests/test_with_prints.py -v
+
+  test-prints-verbose:
+    desc: "Запустить ТОЛЬКО test_with_prints с подробным выводом"
+    cmds:
+      - pytest tests/test_with_prints.py -v -s

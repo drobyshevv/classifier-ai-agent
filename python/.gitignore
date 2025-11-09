@@ -1,0 +1,15 @@
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+
+# Testing
+.pytest_cache/
+
+__init__.py
+
+tests/
