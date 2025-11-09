@@ -1,0 +1,33 @@
+version: '3'
+
+tasks:
+  server:
+    desc: "Запустить gRPC сервер"
+    cmds:
+      - go run ./cmd/server/main.go
+      
+  test-basic:
+    desc: "Запустить базовые тесты"
+    cmds:
+      - go test ./internal/tests/basic/... -v
+
+  test-integration:
+    desc: "Запустить интеграционные тесты"
+    cmds:
+      - go test ./internal/tests/integration/... -v -timeout=30s
+
+  test-all:
+    desc: "Запустить ВСЕ тесты"
+    cmds:
+      - task: test-basic
+      - task: test-integration
+
+  test:
+    desc: "Быстрые тесты (без интеграционных)"
+    cmds:
+      - go test ./internal/tests/... -short -v
+
+  clean:
+    desc: "Очистить кэш тестов"
+    cmds:
+      - go clean -testcache
