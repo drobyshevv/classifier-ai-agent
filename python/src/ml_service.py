@@ -7,6 +7,7 @@ from .models.bert_model import RuBERTModel
 from .services.topic_analyzer import TopicAnalyzerService
 from .services.semantic_search import SemanticSearchService
 from .services.expert_analyzer import ExpertAnalyzerService
+from .topic.intelligent_topics import extended_topics
 
 
 class MLService:
@@ -14,7 +15,7 @@ class MLService:
     
     def __init__(self):
         logger.info("Инициализация ML сервиса...")
-        
+
         self.config = {
             'models': {
                 'bert_model': "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
@@ -26,10 +27,7 @@ class MLService:
                 'normalize': True
             },
             'topics': {
-                'predefined_topics': [
-                    "машинное обучение", "компьютерное зрение", "нейронные сети",
-                    "искусственный интеллект", "анализ данных", "программирование"
-                ]
+                'predefined_topics': extended_topics
             }
         }
         
