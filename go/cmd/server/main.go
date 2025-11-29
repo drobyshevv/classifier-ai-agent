@@ -5,8 +5,8 @@ import (
 	"log"
 	"net"
 
+	"github.com/drobyshevv/classifier-ai-agent/config"
 	"github.com/drobyshevv/classifier-ai-agent/internal/client"
-	"github.com/drobyshevv/classifier-ai-agent/internal/config"
 	"github.com/drobyshevv/classifier-ai-agent/internal/handler"
 	"github.com/drobyshevv/classifier-ai-agent/internal/service"
 	agentv1 "github.com/drobyshevv/proto-ai-agent/gen/go/proto/ai_agent"

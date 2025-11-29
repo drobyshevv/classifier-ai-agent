@@ -1,7 +1,10 @@
 version: '3'
 
 tasks:
-  # Основные команды тестирования
+  run:
+    desc: "app run"
+    cmds:
+      - python run.py
   test:
     desc: "Запустить ВСЕ тесты"
     cmds:

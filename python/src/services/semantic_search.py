@@ -1,3 +1,4 @@
+import base64
 import numpy as np
 from typing import List, Dict
 from loguru import logger
@@ -9,43 +10,30 @@ class SemanticSearchService:
     def __init__(self, bert_model):
         self.bert_model = bert_model
     
-    def search_articles(self, query_vector: np.ndarray, articles: List[Dict], max_results: int = 10) -> List[Dict]:
-        """Семантический поиск статей по вектору запроса"""
-        if not articles:
-            return []
-        
-        logger.info(f"Поиск по {len(articles)} статьям")
-        
-        # Вычисляем сходство для каждой статьи
+    def search_articles(self, query_vector: np.ndarray, articles: List[Dict], max_results: int = 10):
         results = []
+
         for article in articles:
             try:
-                # Среднее сходство по заголовку и аннотации
-                title_similarity = self._vector_similarity(
-                    query_vector, 
-                    np.frombuffer(article['title_embedding'], dtype=np.float32)
-                )
-                abstract_similarity = self._vector_similarity(
-                    query_vector,
-                    np.frombuffer(article['abstract_embedding'], dtype=np.float32)
-                )
-                
-                # Общая релевантность (взвешенная сумма)
-                relevance_score = 0.6 * title_similarity + 0.4 * abstract_similarity
-                
+                title_vec = np.frombuffer(base64.b64decode(article["title_embedding"]), dtype=np.float32)
+                abstract_vec = np.frombuffer(base64.b64decode(article["abstract_embedding"]), dtype=np.float32)
+
+                title_sim = self._vector_similarity(query_vector, title_vec)
+                abstract_sim = self._vector_similarity(query_vector, abstract_vec)
+
+                relevance = 0.6 * title_sim + 0.4 * abstract_sim
+
                 results.append({
                     "document_id": article["document_id"],
-                    "relevance_score": float(relevance_score),
-                    "matched_concepts": self._extract_matched_concepts(article, relevance_score)
+                    "relevance_score": float(relevance)
                 })
-                
+
             except Exception as e:
-                logger.error(f"Ошибка обработки статьи {article.get('document_id')}: {e}")
-                continue
-        
-        # Сортируем и ограничиваем результаты
+                logger.error(f"Error processing {article.get('document_id')}: {e}")
+
         results.sort(key=lambda x: x["relevance_score"], reverse=True)
         return results[:max_results]
+
     
     def _vector_similarity(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
         """Вычисление косинусного сходства между векторами"""

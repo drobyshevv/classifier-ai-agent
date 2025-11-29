@@ -1,7 +1,7 @@
 version: '3'
 
 tasks:
-  server:
+  run:
     desc: "Запустить gRPC сервер"
     cmds:
       - go run ./cmd/server/main.go

@@ -2,6 +2,8 @@ from typing import List, Dict
 import numpy as np
 from loguru import logger
 
+from src.utils.vector_utils import vector_to_base64
+
 
 class TopicAnalyzerService:
     """Сервис анализа тематик"""
@@ -24,10 +26,27 @@ class TopicAnalyzerService:
         title_embedding = self.bert_model.encode_text(title_ru)
         abstract_embedding = self.bert_model.encode_text(abstract_ru)
         
+        # ЛОГИ ДЛЯ ДЕБАГА
+        logger.info(f"Title: '{title_ru}'")
+        logger.info(f"Abstract: '{abstract_ru}'")
+        logger.info(f"Title embedding shape: {title_embedding.shape}, dtype: {title_embedding.dtype}")
+        logger.info(f"Abstract embedding shape: {abstract_embedding.shape}, dtype: {abstract_embedding.dtype}")
+        logger.info(f"Title embedding sample: {title_embedding[:5]}")  # первые 5 значений
+        logger.info(f"Abstract embedding sample: {abstract_embedding[:5]}")
+        
+        
+        title_b64 = vector_to_base64(title_embedding)
+        abstract_b64 = vector_to_base64(abstract_embedding)
+        
+        logger.info(f"Title base64 length: {len(title_b64)}")
+        logger.info(f"Abstract base64 length: {len(abstract_b64)}")
+        logger.info(f"Title base64 preview: {title_b64[:50]}...")
+        logger.info(f"Abstract base64 preview: {abstract_b64[:50]}...")
+        
         return {
             "topics": combined_topics,
-            "title_embedding": title_embedding.tobytes(),
-            "abstract_embedding": abstract_embedding.tobytes()
+            "title_embedding": title_b64, 
+            "abstract_embedding": abstract_b64 
         }
     
     def analyze_user_query(self, user_query: str, context: str = "article_search") -> Dict:

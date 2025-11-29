@@ -1,5 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+import numpy as np
+from pydantic import BaseModel
+from typing import List, Dict, Any, Optional
 import uvicorn
 from loguru import logger
 
@@ -15,17 +18,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class ArticleAnalysisRequest(BaseModel):
+    document_id: str
+    title_ru: str
+    abstract_ru: str
+
+class ArticleTopic(BaseModel):
+    topic_name: str
+    confidence: float
+    topic_type: str
+
+class ArticleAnalysisResponse(BaseModel):
+    topics: List[ArticleTopic]
+    title_embedding: str  # base64 string
+    abstract_embedding: str  # base64 string
+
 # Инициализация ML сервиса
 ml_service = MLService()
 
-@app.post("/api/analyze-article")
-async def analyze_article(request: dict):
+@app.post("/api/analyze-article", response_model=ArticleAnalysisResponse)
+async def analyze_article(request: ArticleAnalysisRequest):
     """Анализ тематик статьи"""
     try:
         result = ml_service.analyze_article_topics(
-            request["document_id"],
-            request["title_ru"],
-            request["abstract_ru"]
+            request.document_id,
+            request.title_ru,
+            request.abstract_ru
         )
         return result
     except Exception as e:
@@ -47,16 +65,28 @@ async def analyze_query(request: dict):
 
 @app.post("/api/semantic-search")
 async def semantic_search(request: dict):
-    """Семантический поиск статей"""
     try:
-        result = ml_service.semantic_article_search(
-            request["query_vector"],
-            request["articles"],
+        import base64
+        import numpy as np
+
+        # 1) decode query vector
+        raw_q = request.get("query_vector")
+        if raw_q is None:
+            raise ValueError("missing query_vector")
+
+        query_vec = np.frombuffer(base64.b64decode(raw_q), dtype=np.float32)
+
+        # 2) pass article embeddings AS BASE64
+        articles = request.get("articles", [])
+
+        return ml_service.semantic_article_search(
+            raw_q,      # base64 string
+            articles,   # unchanged
             request.get("max_results", 10)
         )
-        return result
+
     except Exception as e:
-        logger.error(f"Error in semantic_search: {e}")
+        logger.error(f"Error in semantic_search: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/analyze-experts")

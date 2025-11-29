@@ -44,11 +44,13 @@ class MLService:
         
         result = self.topic_analyzer.analyze_article_topics(document_id, title_ru, abstract_ru)
         
-        # Конвертируем numpy arrays в base64 для JSON
+        logger.info(f"Title embedding type from topic_analyzer: {type(result['title_embedding'])}")
+        logger.info(f"Abstract embedding type from topic_analyzer: {type(result['abstract_embedding'])}")
+        
         return {
             "topics": result["topics"],
-            "title_embedding": base64.b64encode(result["title_embedding"]).decode('utf-8'),
-            "abstract_embedding": base64.b64encode(result["abstract_embedding"]).decode('utf-8')
+            "title_embedding": result["title_embedding"],  
+            "abstract_embedding": result["abstract_embedding"]  
         }
     
     def analyze_user_query(self, user_query: str, context: str) -> Dict[str, Any]:
@@ -64,30 +66,30 @@ class MLService:
             "query_type": result["query_type"]
         }
     
-    def semantic_article_search(self, query_vector: bytes, articles: List[Dict], max_results: int) -> Dict[str, Any]:
-        """Семантический поиск статей"""
+    def semantic_article_search(self, query_vector: str, articles: List[Dict], max_results: int):
         logger.info(f"Семантический поиск по {len(articles)} статьям")
-        
-        # Декодируем query_vector из base64
+
+        # 1) decode query vector
         query_vec = np.frombuffer(base64.b64decode(query_vector), dtype=np.float32)
-        
-        # Декодируем эмбеддинги статей
+
         processed_articles = []
-        for article in articles:
+        for art in articles:
             processed_articles.append({
-                "document_id": article["document_id"],
-                "title_ru": article["title_ru"],
-                "abstract_ru": article["abstract_ru"],
-                "title_embedding": base64.b64decode(article["title_embedding"]),
-                "abstract_embedding": base64.b64decode(article["abstract_embedding"])
+                "document_id": art["document_id"],
+                "title_ru": art["title_ru"],
+                "abstract_ru": art["abstract_ru"],
+                # 2) RAW base64, decode later in SemanticSearchService
+                "title_embedding": art["title_embedding"],
+                "abstract_embedding": art["abstract_embedding"]
             })
-        
+
         results = self.semantic_search.search_articles(query_vec, processed_articles, max_results)
-        
+
         return {
             "results": results,
             "total_found": len(results)
         }
+
     
     def analyze_experts_by_topic(self, topic: str, authors: List[Dict]) -> Dict[str, Any]:
         """Анализ экспертов по теме"""
