@@ -10,22 +10,39 @@ class SemanticSearchService:
     def __init__(self, bert_model):
         self.bert_model = bert_model
     
-    def search_articles(self, query_vector: np.ndarray, articles: List[Dict], max_results: int = 10):
+    def _normalize(self, v):
+        norm = np.linalg.norm(v)
+        return v / norm if norm > 0 else v
+
+    def search_articles(self, query_vector, articles, max_results=10):
+        # normalize query
+        query_vector = self._normalize(query_vector.astype(np.float32))
+
         results = []
 
         for article in articles:
             try:
-                title_vec = np.frombuffer(base64.b64decode(article["title_embedding"]), dtype=np.float32)
-                abstract_vec = np.frombuffer(base64.b64decode(article["abstract_embedding"]), dtype=np.float32)
+                title_vec = np.frombuffer(
+                    base64.b64decode(article["title_embedding"]),
+                    dtype=np.float32
+                )
+                abstract_vec = np.frombuffer(
+                    base64.b64decode(article["abstract_embedding"]),
+                    dtype=np.float32
+                )
 
-                title_sim = self._vector_similarity(query_vector, title_vec)
-                abstract_sim = self._vector_similarity(query_vector, abstract_vec)
+                # CRITICAL FIX
+                title_vec = self._normalize(title_vec)
+                abstract_vec = self._normalize(abstract_vec)
+
+                title_sim = float(np.dot(query_vector, title_vec))
+                abstract_sim = float(np.dot(query_vector, abstract_vec))
 
                 relevance = 0.6 * title_sim + 0.4 * abstract_sim
 
                 results.append({
                     "document_id": article["document_id"],
-                    "relevance_score": float(relevance)
+                    "relevance_score": relevance
                 })
 
             except Exception as e:
@@ -33,6 +50,7 @@ class SemanticSearchService:
 
         results.sort(key=lambda x: x["relevance_score"], reverse=True)
         return results[:max_results]
+
 
     
     def _vector_similarity(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
